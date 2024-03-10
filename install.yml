@@ -1,0 +1,11 @@
+- hosts: localhost
+  gather_facts: yes
+  become: true
+
+- name: Applicatons Playbook Ubuntu
+  ansible.builtin.import_playbook: ./applications/apps-ubuntu.yml
+  when: ansible_distribution == "Ubuntu"
+  
+- name: Applicatons Playbook Fedora
+  ansible.builtin.import_playbook: ./applications/apps-fedora.yml
+  when: ansible_distribution == "Fedora" 

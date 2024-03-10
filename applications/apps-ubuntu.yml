@@ -1,0 +1,42 @@
+- hosts: localhost
+  become: true
+  tasks:
+  - name: Update apt cache
+    apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+  - name: Upgrade all apt packages
+    apt: state=latest force_apt_get=yes
+  - name: Add Nodesource apt key.
+    apt_key:
+      url: https://keyserver.ubuntu.com/pks/lookup?op=get&fingerprint=on&search=0x1655A0AB68576280
+      id: "68576280"
+      state: present
+  - name: Add NodeSource repository
+    apt_repository:
+      repo: "deb https://deb.nodesource.com/node_20.x {{ ansible_distribution_release }} main"
+      state: present
+      update_cache: yes
+      filename: nodesource
+  - name: Install Applications
+    apt: 
+      pkg: "{{ item }}" 
+      state: latest 
+      update_cache: true
+    loop: [zeal, git, tig, zsh, vim, tlp, tlp-rdw, htop, btop, powertop, iotop, gparted, tmux, exuberant-ctags, gcc, g++, build-essential, make, cmake, lib32stdc++6, cmake, unzip, pkg-config, libjpeg-dev, libpng-dev, libtiff-dev, libavcodec-dev, libavformat-dev, libswscale-dev, libv4l-dev, libxvidcore-dev, libx264-dev, libgtk-3-dev, libatlas-base-dev, gfortran, python3-dev, sl, rng-tools, xclip, autojump, cpufrequtils, nmap, libsdl2-2.0-0, libsdl2-ttf-2.0-0, libportaudio2, libpng16-16, libxi-dev, libx11-dev, libappindicator-dev, iptraf-ng, git-core, flex, bison, gperf, zip, zlib1g-dev, gcc-multilib, g++-multilib, libc6-dev-i386, lib32ncurses5-dev, x11proto-core-dev, lib32z-dev, libgl1-mesa-dev, libxml2-utils, xsltproc, unzip, python-is-python3, "linux-headers-{{ ansible_kernel }}", "nodejs"]
+  - name: check if cargo is installed
+    shell: command -v cargo
+    register: cargo_exists
+    ignore_errors: yes
+  - name: Download Installer
+    when: cargo_exists is failed
+    get_url:
+      url: https://sh.rustup.rs
+      dest: /tmp/sh.rustup.rs
+      mode: '0755'
+      force: 'yes'
+    tags:
+      - rust
+  - name: install rust/cargo
+    when: cargo_exists is failed
+    shell: /tmp/sh.rustup.rs -y
+    tags:
+      - rust
